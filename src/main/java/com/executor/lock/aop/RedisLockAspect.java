@@ -69,9 +69,10 @@ public class RedisLockAspect implements ApplicationContextAware {
     }
 
     @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+    public void setApplicationContext(ApplicationContext  applicationContext) throws BeansException {
         if (RedisLockAspect.applicationContext == null) {
             RedisLockAspect.applicationContext = applicationContext;
         }
     }
+
 }

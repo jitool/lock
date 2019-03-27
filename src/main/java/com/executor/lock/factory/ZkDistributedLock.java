@@ -3,12 +3,14 @@ package com.executor.lock.factory;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -29,7 +31,7 @@ public class ZkDistributedLock extends AbstractLockFactory implements Initializi
     /**
      * 创建 watcher 事件
      */
-    private void addWatcher(String path) throws Exception {
+    private void addWatcher(final String path) throws Exception {
         String keyPath;
         if (path.equals(ROOT_PATH_LOCK)) {
             keyPath = "/" + path;
@@ -38,13 +40,16 @@ public class ZkDistributedLock extends AbstractLockFactory implements Initializi
         }
         final PathChildrenCache cache = new PathChildrenCache(curatorFramework, keyPath, false);
         cache.start(PathChildrenCache.StartMode.POST_INITIALIZED_EVENT);
-        cache.getListenable().addListener((client, event) -> {
-            if (event.getType().equals(PathChildrenCacheEvent.Type.CHILD_REMOVED)) {
-                String oldPath = event.getData().getPath();
-                log.debug("success to release lock for path:{}", oldPath);
-                if (oldPath.contains(path)) {
-                    //释放计数器，让当前的请求获取锁
-                    countDownLatch.countDown();
+        cache.getListenable().addListener(new PathChildrenCacheListener() {
+            @Override
+            public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception {
+                if (event.getType().equals(PathChildrenCacheEvent.Type.CHILD_REMOVED)) {
+                    String oldPath = event.getData().getPath();
+                    log.debug("success to release lock for path:{}", oldPath);
+                    if (oldPath.contains(path)) {
+                        //释放计数器，让当前的请求获取锁
+                        countDownLatch.countDown();
+                    }
                 }
             }
         });

@@ -53,7 +53,7 @@ public class DistributedLockAutoConfiguration {
     @Bean(initMethod = "start")
     @ConditionalOnProperty(value = "curator.connect-string")
     public CuratorFramework curatorFramework() {
-        log.info("开始加载CuratorFramework客户端");
+        log.info("开始加载CuratorFramework客户端》》》》》");
         return CuratorFrameworkFactory.newClient(
                 curatorProperties.getConnectString(),
                 curatorProperties.getSessionTimeOut(),
