@@ -1,26 +1,30 @@
 package com.executor.lock.config;
 
-import com.executor.lock.aop.RedisLockAspect;
-import com.executor.lock.factory.AbstractLockFactory;
-import com.executor.lock.factory.RedissionDistributedLock;
-import com.executor.lock.factory.ZkDistributedLock;
-import com.executor.lock.aop.DistributedLockAspect;
-import io.netty.channel.nio.NioEventLoopGroup;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryNTimes;
+import org.junit.internal.runners.statements.Fail;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
+
+import com.executor.lock.aop.DistributedLockAspect;
+import com.executor.lock.lock.base.Lock;
+import com.executor.lock.lock.impl.RedisLockImpl;
+
+import io.netty.channel.nio.NioEventLoopGroup;
 
 /**
  * @Auther: miaoguoxin
@@ -37,18 +41,38 @@ public class DistributedLockAutoConfiguration {
     private CuratorProperties curatorProperties;
     @Autowired
     private RedissonProperties redissonProperties;
-
+    @Autowired
+    private Environment environment;
+    
+    private static final String RedisLockImpl="lock.enable.redis";
+    
+    @Bean
+    public DistributedLockAspect distributedLockAspect(ApplicationContext context) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+    	DistributedLockAspect aspect=new DistributedLockAspect();
+    	//注入返回失败的属性
+    	Lock lock = (Lock) context.getBean("lock");
+    	if(null == lock)
+    		throw new NullPointerException("you don`t have the impl of "+Lock.class);
+    	aspect.setLock(lock);
+    	log.info("分布式锁注解启动成功");
+    	return aspect;
+    }
+    /**
+     * 当配置文件中存在 lock.enable.redis 才会有redis实现
+     * @return
+     */
+    @Bean("lock")
+    @ConditionalOnProperty(name=RedisLockImpl,havingValue="true")
+    public Lock redisLock() {
+    	return new RedisLockImpl();
+    }
+    
     @Bean
     @ConditionalOnMissingBean(DistributedLockAspect.class)
     public DistributedLockAspect distributedLockAspect(){
         return new DistributedLockAspect();
     }
 
-    @Bean
-    @ConditionalOnMissingBean(RedisLockAspect.class)
-    public RedisLockAspect redisLockAspect(){
-        return new RedisLockAspect();
-    }
 
     @Bean(initMethod = "start")
     @ConditionalOnProperty(value = "curator.connect-string")
@@ -60,14 +84,6 @@ public class DistributedLockAutoConfiguration {
                 curatorProperties.getConnectionTimeOut(),
                 new RetryNTimes(curatorProperties.getRetryTimes(), curatorProperties.getSleepBetweenRetryTime()));
     }
-
-
-    @Bean(name = "zkDistributedLock")
-    @ConditionalOnBean(CuratorFramework.class)
-    public AbstractLockFactory zkDistributedLock(){
-        return new ZkDistributedLock();
-    }
-
 
     @Bean
     @ConditionalOnProperty(value = "redisson.address")
@@ -98,12 +114,5 @@ public class DistributedLockAutoConfiguration {
         config.setUseLinuxNativeEpoll(false);
         return Redisson.create(config);
     }
-
-    @Bean(name = "redissionDistributedLock")
-    @ConditionalOnBean(RedissonClient.class)
-    public AbstractLockFactory redissonLock(){
-        return new RedissionDistributedLock();
-    }
-
 
 }
