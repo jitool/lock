@@ -48,15 +48,17 @@ public class RedisLockAspect implements ApplicationContextAware {
                     if(lockFactory.acquireDistributedLock(redisLock.name(),redisLock.timeUnit(),redisLock.expire())){
                         logger.info(" create redis lock name is " + redisLock.name());
                         result = pjp.proceed();
+                        if(lockFactory.releaseDistributedLock(redisLock.name())){
+                            //释放锁
+                            logger.info(" unlock redis lock name is " + redisLock.name());
+                        }else{
+                            //释放锁
+                            logger.error(" unlock redis lock name is " + redisLock.name() +"failure");
+                            throw new RuntimeException(" unlock redis lock name is "+redisLock.name()+" failure ");
+                        }
                     }else{
-                        logger.error(" create redis lock failure ");
-                    }
-                    if(lockFactory.releaseDistributedLock(redisLock.name())){
-                        //释放锁
-                        logger.info(" unlock redis name is " + redisLock.name());
-                    }else{
-                        //释放锁
-                        logger.info(" unlock redis failure");
+                        logger.error(" create redis lock name is "+redisLock.name()+" failure ");
+                        throw new RuntimeException(" create redis lock name is "+redisLock.name()+" failure ");
                     }
 
                 }

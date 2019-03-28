@@ -40,19 +40,19 @@ public class RedissionDistributedLock extends AbstractLockFactory {
      * @return
      */
     @Override
-    public boolean releaseDistributedLock(String key) {
+    public boolean acquireDistributedLock(String key) {
         RLock lock = redissonClient.getLock(key);
         lock.lock();
         return true;
     }
 
     /**
-     * 释放锁
+     * 释放锁acquireDistributedLock
      * @param key 释放锁的key
      * @return
      */
     @Override
-    public boolean acquireDistributedLock(String key) {
+    public boolean releaseDistributedLock(String key) {
         RLock lock = redissonClient.getLock(key);
         lock.unlock();
         return true;
