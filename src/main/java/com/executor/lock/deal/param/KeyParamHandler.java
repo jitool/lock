@@ -62,8 +62,8 @@ public class KeyParamHandler {
 	/**
 	 * 获取值,不处理数组,数组特殊处理
 	 * @param lockKeyParam
-	 * @param class1
-	 * @param object
+	 * @param parameterClass
+	 * @param arg
 	 * @return
 	 * @throws Exception 
 	 */
