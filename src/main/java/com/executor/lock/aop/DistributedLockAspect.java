@@ -46,13 +46,14 @@ public class DistributedLockAspect {
 		StringBuilder keyBuilder = new StringBuilder(prefix);
 		if(null != suffix)
 			keyBuilder.append(suffix);
-		String key = keyBuilder.toString();
 		//uuid作为解锁的依据,看是否需要强锁
-		String value="1";
-		if(distributedLockAnno.needSureOwn())
-			value=UUID.randomUUID().toString().replace("-", "");
+		if(distributedLockAnno.needSureOwn()) {
+			String check=UUID.randomUUID().toString().replace("-", "");
+			keyBuilder.append(check);
+		}
+		String key = keyBuilder.toString();
 		Long expireTime = distributedLockAnno.expire();
-		boolean tryLock = lock.tryLock(key, value, expireTime);
+		boolean tryLock = lock.tryLock(key, "1", expireTime);
 		if(!tryLock)
 			throw new LockReleaseFailException();
 		//真正执行
@@ -61,7 +62,7 @@ public class DistributedLockAspect {
 		if(!distributedLockAnno.needSureOwn())
 			lock.tryRelease(key);
 		else
-			lock.checkRelease(key,value);
+			lock.checkRelease(key);
 		return proceed;
 	}
 }

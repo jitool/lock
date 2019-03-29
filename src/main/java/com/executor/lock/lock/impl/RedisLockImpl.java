@@ -1,5 +1,9 @@
 package com.executor.lock.lock.impl;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisCallback;
+import org.springframework.data.redis.core.StringRedisTemplate;
+
 import com.executor.lock.lock.base.Lock;
 
 /**
@@ -8,10 +12,24 @@ import com.executor.lock.lock.base.Lock;
  */
 public class RedisLockImpl implements Lock{
 	/**
+	 * 这里就不写util了
+	 */
+	@Autowired
+	private StringRedisTemplate redisTemplate;
+	/**
 	 * 假实现
 	 */
 	@Override
 	public boolean tryLock(String key, Object value, Long expireTime) {
+		try {
+            RedisCallback<String> callback = (connection) -> {
+            	System.out.println(connection.getNativeConnection());
+            	return key;
+            };
+            redisTemplate.execute(callback);
+            return true;
+        } catch (Exception e) {
+        }
 		return true;
 	}
 
@@ -21,7 +39,7 @@ public class RedisLockImpl implements Lock{
 	}
 
 	@Override
-	public boolean checkRelease(String key, Object value) {
+	public boolean checkRelease(String key) {
 		return true;
 	}
 

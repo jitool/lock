@@ -25,5 +25,5 @@ public interface Lock {
 	 * @param key
 	 * @return
 	 */
-	boolean checkRelease(String key,Object value);
+	boolean checkRelease(String key);
 }
