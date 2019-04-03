@@ -6,4 +6,11 @@ package com.executor.lock.exception;
  *
  */
 public class LockReleaseFailException extends RuntimeException{
+	
+	public LockReleaseFailException(String message) {
+		super(message);
+	}
+
+	public LockReleaseFailException() {
+	}
 }

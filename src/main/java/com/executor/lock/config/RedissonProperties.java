@@ -1,17 +1,20 @@
 package com.executor.lock.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
 
 /**
  * @Auther: miaoguoxin
  * @Date: 2019/3/18 0018 17:45
  * @Description:
  */
-@ConfigurationProperties(prefix = "redisson")
+@ConfigurationProperties(prefix = "lock.redis")
+@Component
 public class RedissonProperties {
+	
     private String address;
-    private String password = null;
-    private int connectionMinimumIdleSize = 10;
+    private String password;
+    private int connectionMinimumIdleSize = 7;
     private int idleConnectionTimeout = 10000;
     private int pingTimeout = 1000;
     private int connectTimeout = 10000;
@@ -23,7 +26,7 @@ public class RedissonProperties {
     private int subscriptionsPerConnection = 5;
     private String clientName = null;
     private int subscriptionConnectionMinimumIdleSize = 1;
-    private int subscriptionConnectionPoolSize = 50;
+    private int subscriptionConnectionPoolSize = 20;
     private int connectionPoolSize = 64;
     private int database = 0;
     private boolean dnsMonitoring = false;

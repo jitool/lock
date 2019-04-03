@@ -9,9 +9,10 @@ import com.executor.lock.annotation.LockKeyParam;
 @RestController
 public class Demo {
 
-	@DistributedLockAnno(prefix="aaa",expire=100,needSureOwn=true)
+	@DistributedLockAnno(prefix="aaaa",expire=3,needSureOwn=true)
 	@RequestMapping("aaa")
-	public String aa(@LockKeyParam String id) {
+	public String aa(@LockKeyParam String id) throws InterruptedException {
+		Thread.sleep(6000);
 		return "a";
 	}
 }

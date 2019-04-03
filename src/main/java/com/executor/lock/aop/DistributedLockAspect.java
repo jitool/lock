@@ -11,6 +11,7 @@ import org.aspectj.lang.reflect.MethodSignature;
 import com.executor.lock.annotation.DistributedLockAnno;
 import com.executor.lock.deal.param.KeyParamHandler;
 import com.executor.lock.exception.LockReleaseFailException;
+import com.executor.lock.exception.TryLockFailException;
 import com.executor.lock.lock.base.Lock;
 
 /**
@@ -36,7 +37,7 @@ public class DistributedLockAspect {
 	}
 
 	@Around("myInfoAnnotation()")
-	public Object around(ProceedingJoinPoint jp) throws java.lang.Throwable {
+	public Object around(ProceedingJoinPoint jp) throws Throwable {
 		//后缀
 		String suffix = KeyParamHandler.getSuffix(jp);
 		//得到参数上的注解
@@ -47,22 +48,22 @@ public class DistributedLockAspect {
 		if(null != suffix)
 			keyBuilder.append(suffix);
 		//uuid作为解锁的依据,看是否需要强锁
+		Object value="1";
 		if(distributedLockAnno.needSureOwn()) {
-			String check=UUID.randomUUID().toString().replace("-", "");
-			keyBuilder.append(check);
+			value=UUID.randomUUID().toString().replace("-", "");
 		}
 		String key = keyBuilder.toString();
 		Long expireTime = distributedLockAnno.expire();
-		boolean tryLock = lock.tryLock(key, "1", expireTime);
+		boolean tryLock = lock.tryLock(key, value, expireTime);
 		if(!tryLock)
-			throw new LockReleaseFailException();
+			throw new TryLockFailException();
 		//真正执行
 		Object proceed = jp.proceed();
 		//解锁
 		if(!distributedLockAnno.needSureOwn())
 			lock.tryRelease(key);
 		else
-			lock.checkRelease(key);
+			lock.checkRelease(key,value);
 		return proceed;
 	}
 }
