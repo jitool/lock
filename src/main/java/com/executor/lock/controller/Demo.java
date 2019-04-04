@@ -12,7 +12,7 @@ public class Demo {
 	@DistributedLockAnno(prefix="aaaa",expire=3,needSureOwn=true)
 	@RequestMapping("aaa")
 	public String aa(@LockKeyParam String id) throws InterruptedException {
-		Thread.sleep(6000);
+		Thread.sleep(5000);
 		return "a";
 	}
 }

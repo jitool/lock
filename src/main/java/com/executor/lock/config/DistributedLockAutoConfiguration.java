@@ -6,6 +6,7 @@ import org.apache.curator.retry.RetryNTimes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
@@ -34,13 +35,14 @@ public class DistributedLockAutoConfiguration {
     
     @Bean
     public DistributedLockAspect distributedLockAspect(ApplicationContext context) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+    	log.info("》》》》》》》》分布式锁注解启动中《《《《《《《《《《");
     	DistributedLockAspect aspect=new DistributedLockAspect();
     	//注入返回失败的属性
     	Lock lock = (Lock) context.getBean("lock");
     	if(null == lock)
     		throw new NullPointerException("you don`t have the impl of "+Lock.class);
     	aspect.setLock(lock);
-    	log.info("分布式锁注解启动成功");
+    	log.info("》》》》》》》》分布式锁注解启动成功《《《《《《《《《《");
     	return aspect;
     }
 

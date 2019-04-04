@@ -12,10 +12,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import com.executor.lock.lock.base.Lock;
 import com.executor.lock.lock.impl.DefaultRedisLockImpl;
@@ -45,24 +41,6 @@ public class RedisLockConfig {
 	private Environment environment;
 
 	@Bean
-	@ConditionalOnMissingBean(RedisTemplate.class)
-	public RedisTemplate redisTemplate(ApplicationContext context) {
-		RedisTemplate<Object, Object> template = new RedisTemplate<>();
-		RedisConnectionFactory connectionFactory = context.getBean(RedisConnectionFactory.class);
-		template.setConnectionFactory(connectionFactory);
-		// 使用Jackson2JsonRedisSerializer来序列化和反序列化redis的value值
-		Jackson2JsonRedisSerializer serializer = new Jackson2JsonRedisSerializer(Object.class);
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
-		serializer.setObjectMapper(mapper);
-		template.setValueSerializer(serializer);
-		// 使用StringRedisSerializer来序列化和反序列化redis的key值
-		template.setKeySerializer(new StringRedisSerializer());
-		template.afterPropertiesSet();
-		return template;
-	}
-	
-	@Bean
 	@ConditionalOnMissingBean(RedissonClient.class)
 	public RedissonClient redissonClient() {
 		log.info("-----------开始加载redission客户端-----------------------");
@@ -86,7 +64,7 @@ public class RedisLockConfig {
 		config.setEventLoopGroup(new NioEventLoopGroup());
 		config.setUseLinuxNativeEpoll(false);
 		RedissonClient client = Redisson.create(config);
-		log.info("--------------redisson 初始化完成-----------------------");
+		log.info("-------------redisson 初始化完成 --------------------");
 		return client;
 	}
 
@@ -100,11 +78,10 @@ public class RedisLockConfig {
 		DefaultRedisLockImpl defaultRedisLockImpl = new DefaultRedisLockImpl();
 		RedissonClient redissonClient = context.getBean(RedissonClient.class) == null ? redissonClient()
 				: context.getBean(RedissonClient.class);
-		RedisTemplate redisTemplate = (RedisTemplate) context.getBean("redisTemplate");
 		String waitTime = environment.getProperty(LOCK_WAIT_TIME, "5");
 		defaultRedisLockImpl.setWaitTime(Long.valueOf(waitTime));
-		defaultRedisLockImpl.setRedisTemplate(redisTemplate);
 		defaultRedisLockImpl.setRedissonClient(redissonClient);
+		defaultRedisLockImpl.init();
 		//redis 默认锁 生效
 		return defaultRedisLockImpl;
 	}

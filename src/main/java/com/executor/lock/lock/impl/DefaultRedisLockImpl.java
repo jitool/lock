@@ -1,7 +1,6 @@
 package com.executor.lock.lock.impl;
 
 import java.lang.reflect.Field;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
@@ -13,7 +12,6 @@ import org.redisson.api.RScript;
 import org.redisson.api.RScript.Mode;
 import org.redisson.api.RScript.ReturnType;
 import org.redisson.api.RedissonClient;
-import org.springframework.data.redis.core.RedisTemplate;
 
 import com.executor.lock.exception.LockReleaseFailException;
 import com.executor.lock.lock.base.AbstractLockImpl;
@@ -28,19 +26,17 @@ public class DefaultRedisLockImpl extends AbstractLockImpl{
 	 */
 	private RedissonClient redissonClient;
 	
-	private RedisTemplate redisTemplate;
-	
 	private RScript script;
 	
-	private UUID id;
+	private String id;
 	
 	private static final  String scriptTxt = "if redis.call('HGET', KEYS[1],KEYS[2]) == nil then return 0 else return redis.call('HDEL', KEYS[1],KEYS[2]) end";
 	//------------注入------------
-	public void setRedisTemplate(RedisTemplate redisTemplate) {
-		this.redisTemplate = redisTemplate;
-	}
 	public void setRedissonClient(RedissonClient redissonClient) {
 		this.redissonClient = redissonClient;
+	}
+	public void init() {
+		script=redissonClient.getScript();
 	}
 	public void setWaitTime(long waitTime) {
 		this.waitTime = waitTime;
@@ -73,7 +69,7 @@ public class DefaultRedisLockImpl extends AbstractLockImpl{
 		keys.add(hash_key);
 		long result = script.eval(Mode.READ_WRITE, scriptTxt, ReturnType.INTEGER,keys);
 		if(1L != result)
-			throw new LockReleaseFailException("key is expired");
+			throw new LockReleaseFailException("key:"+key+" is expired");
 	}
 	/**
 	 * 通过反射去获取redisson中的UUID
@@ -88,9 +84,9 @@ public class DefaultRedisLockImpl extends AbstractLockImpl{
 			Class<? extends RedissonClient> clazz = redissonClient.getClass();
 			Field uUIDField = clazz.getDeclaredField("id");
 			uUIDField.setAccessible(true);
-			id = (UUID) uUIDField.get(redissonClient);
+			id = new StringBuilder(uUIDField.get(redissonClient).toString()).append(":").toString();
 			uUIDField.setAccessible(false);
 		}
-		return new StringBuilder(id.toString()).append(":").append(tid).toString();
+		return new StringBuilder(id).append(tid).toString();
 	}
 }
