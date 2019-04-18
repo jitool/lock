@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="lock-spring-boot-starter">
-    <output-path>$PROJECT_DIR$/out/artifacts/lock_spring_boot_starter</output-path>
-    <root id="archive" name="lock-spring-boot-starter.jar">
-      <element id="dir-copy" path="$PROJECT_DIR$/target/classes" />
-    </root>
-  </artifact>
-</component>
